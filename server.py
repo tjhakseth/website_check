@@ -1,96 +1,62 @@
 """Lookout Backend Internship - Services/Security Homework"""
 import argparse
 import requests
-import signal
 import time
+from datetime import datetime
 from sqlalchemy.orm import sessionmaker
 from model import Status, db_connect, create_status_table
 
 
 def command_line_parser():
-    """Creates command line string"""
+    """Parses command line string"""
 
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('integers', metavar='N', type=int, nargs='+',
-                       help='an integer for the accumulator')
-    parser.add_argument('--sum', dest='accumulate', action='store_const',
-                       const=sum, default=max,
-                       help='sum the integers (default: find the max)')
+    parser = argparse.ArgumentParser(description="""Contacts a specific website
+        at a specified interval to determine if the website is available""")
+    parser.add_argument('-u', '--url', metavar='URL', type=str,
+                       help='URL to check', required=True, dest='url')
+    parser.add_argument('-d', '--database', metavar='DATABASE', type=str,
+                       help='Database connection string', required=True, 
+                       dest='database')
+    parser.add_argument('-i', '--interval', metavar='INTERVAL', type=int,
+                       help='interval', default=60, dest='interval')
 
     args = parser.parse_args()
-    print(args.accumulate(args.integers))
+    return args
 
 
-def db_connection():
-    """Connects to postgres database"""
+def db_connection(database):
+    """Connects to the database"""
 
-    engine = db_connect()
+    engine = db_connect(database)
     create_status_table(engine)
     Session = sessionmaker()
     Session.configure(bind=engine)
 
-
-interval = int(raw_input("Enter number of seconds: "))
-url = raw_input("Enter website: ")
+    return Session
 
 
 def url_check(url):
-    """Checks to make sure the url is valid"""
+    """Checks to make sure the website exists"""
 
-    r = requests.head(url)
-    if r.status_code != 200:
-        url = raw_input("Error-please enter a valid website: ")
-    else:
-        return url
+    try:
+        r = requests.head(url, timeout=10)
+        return(r.status_code)
 
-    # try:
-    #     r = requests.head(url)
-    #     print(r.status_code)
-    #     # prints the int of the status code. Find more at httpstatusrappers.com :)
-    # except requests.ConnectionError:
-    #     print("failed to connect")
+    except requests.ConnectionError:
+        print("failed to connect")
+        return None
 
 
-def download_file(url):
-    """Downloads a file and chunks it for better downloading"""
-
-    local_filename = url.split('/')[-1]
-    # NOTE the stream=True parameter
-    r = requests.get(url, stream=True)
-    with open(local_filename, 'wb') as f:
-        for chunk in r.iter_content(chunk_size=1024): 
-            if chunk:# filter out keep-alive new chunks
-                f.write(chunk)
-                #f.flush()
-    return local_filename
-
-
-def signal_handler(signum, frame):
-    """Timeout for websites"""
-
-    raise Exception("Timed out!")
-
-signal.signal(signal.SIGALRM, signal_handler)
-signal.alarm(10)   # Ten seconds
-try:
-    long_function_call()
-except Exception, msg:
-    print "Timed out!"
-
-
-def process_site(interval, url):
+def process_site(interval, url, Session):
     """Processes the website and adds to the database"""
+
     while True:
-        if interval < 1:
-            interval = 60
+        HTTP_status_code = url_check(url)
+        timestamp = datetime.now()
 
-        r = requests.get(url)
-        HTTP_status_code = r.status_code
-        timestamp = r.headers['Date']
-
-        print type(HTTP_status_code)
-
-        new_record = Status(HTTP_status_code=HTTP_status_code, url=url, timestamp=timestamp)
+        new_record = Status(HTTP_status_code=HTTP_status_code, 
+                            url=url, 
+                            timestamp=timestamp)
         session = Session()
         session.add(new_record)
         session.commit()
@@ -102,3 +68,6 @@ def process_site(interval, url):
 
 
 if __name__ == '__main__':
+    options = command_line_parser()
+    Session = db_connection(options.database)
+    process_site(options.interval, options.url, Session)

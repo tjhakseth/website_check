@@ -5,9 +5,9 @@ from sqlalchemy.engine.url import URL
 
 Base = declarative_base()
 
-def db_connect():
+def db_connect(database):
 
-    engine = create_engine('postgresql://localhost/lookoutdb')
+    engine = create_engine(database)
 
     return engine
 
