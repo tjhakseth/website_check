@@ -1,5 +1,4 @@
-# website_check will check a website every 60 seconds or a specified interval,
- and stores the status code in a SQL database
+# website_check will check a website every 60 seconds or a specified interval and stores the status code in a SQL database
 
 ## Install requirements.txt
 
