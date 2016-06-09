@@ -1,4 +1,5 @@
-"""Lookout Backend Internship - Services/Security Homework"""
+"""sitecheck will check a site every 60 seconds or a specified interval,
+ and stores the status code in a SQL database"""
 import argparse
 import requests
 import time

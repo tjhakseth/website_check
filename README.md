@@ -1,4 +1,5 @@
-# Lookout Backend Internship - Services/Security Homework
+# website_chcek will check a site every 60 seconds or a specified interval,
+ and stores the status code in a SQL database"""
 
 ## Install requirements.txt
 
@@ -8,9 +9,9 @@
  
  Download/Run postgres
  
- `$ dropdb lookoutdb`
+ `$ dropdb exampledb`
  
- `$ createdb lookoutdb`
+ `$ createdb exampledb`
  
 ## To run the program
 Command Line Syntax:
@@ -19,7 +20,7 @@ Command Line Syntax:
 
 Example:
 
-`$ python sitecheck.py -u http://www.google.com -d postgresql://localhost/lookoutdb -i 2`
+`$ python sitecheck.py -u http://www.google.com -d postgresql://localhost/exampledb -i 2`
 
 For full help:
 
